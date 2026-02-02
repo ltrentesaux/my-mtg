@@ -1,0 +1,21 @@
+.deck-selection-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.deck-selection-btn {
+  background-color: #4CAF50; /* Vert pour la sélection */
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 1rem;
+}
+
+.deck-selection-btn:hover {
+  background-color: #45a049;
+}

@@ -1,0 +1,15 @@
+/src/assets/images
+
+/src/assets/style/Profile.css
+/src/assets/style/Settings.css
+
+/src/pages/Profile.jsx
+/src/pages/Settings.jsx
+
+/src/components/AvatarSelectionModal.jsx
+
+/dist/*
+/node_modules/*
+/.env
+
+

@@ -1,0 +1,64 @@
+.deck-detail-container {
+  padding: 2rem;
+}
+
+.deck-detail-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #444;
+}
+
+.deck-detail-cover-image {
+  width: 150px;
+  height: 210px;
+  border-radius: 10px;
+  margin-right: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.deck-detail-title h1 {
+  margin: 0;
+  font-size: 2.8rem;
+  font-weight: bold;
+  color: #E0E0E0;
+}
+
+.deck-detail-title p {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #A0A0A0;
+  text-transform: uppercase;
+}
+
+.deck-contents {
+  background-color: #2C2C2C;
+  padding: 2rem;
+  border-radius: 8px;
+}
+
+.deck-contents h2 {
+  margin-top: 0;
+  font-size: 1.8rem;
+  border-bottom: 2px solid #E94560;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.deck-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.5rem;
+}
+
+.deck-card-item img {
+  width: 100%;
+  border-radius: 8px;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.deck-card-item img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(233, 69, 96, 0.7);
+}

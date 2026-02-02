@@ -1,0 +1,72 @@
+.my-decks-container {
+  /* Pas de style de conteneur ici, il sera dans App.jsx */
+}
+
+.my-decks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #555;
+    padding-bottom: 1rem;
+}
+
+.my-decks-header h1 {
+  margin: 0;
+}
+
+.decks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 25px;
+}
+
+.deck-card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.deck-card {
+    border-radius: 8px;
+    background-color: #333;
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.deck-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+}
+
+.deck-cover-image {
+    width: 100%;
+    height: 150px; /* Hauteur fixe pour l'image */
+    object-fit: cover; /* Assure que l'image couvre la zone sans se déformer */
+    display: block;
+}
+
+.deck-card-info {
+    padding: 15px;
+}
+
+.deck-card-info h3 {
+    font-size: 1.2rem;
+    margin: 0 0 5px 0;
+    color: #ffffff;
+}
+
+.deck-card-info p {
+    font-size: 0.9rem;
+    margin: 0;
+    color: #ccc;
+}
+
+.no-decks-message {
+  color: #ccc;
+  font-style: italic;
+  grid-column: 1 / -1; /* Prend toute la largeur de la grille */
+  text-align: center;
+  padding: 2rem;
+}

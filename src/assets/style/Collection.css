@@ -1,0 +1,97 @@
+.collection-page-container {
+    padding: 20px;
+}
+
+.collection-page-container h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+    color: #ffffff;
+}
+
+.empty-collection {
+    text-align: center;
+    padding: 60px 20px;
+    background-color: #2c2c2c;
+    border-radius: 8px;
+    margin: 40px auto;
+    max-width: 600px;
+}
+
+.empty-collection p {
+    font-size: 1.2rem;
+    color: #c7c7c7;
+    margin: 10px 0;
+}
+
+.collection-stats {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: #2c2c2c;
+    border-radius: 8px;
+    border-left: 4px solid #8a2be2;
+}
+
+.collection-stats p {
+    font-size: 1.1rem;
+    color: #c7c7c7;
+    margin: 0;
+}
+
+.collection-stats strong {
+    color: #8a2be2;
+    font-size: 1.3rem;
+}
+
+.card-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.card-item {
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #2c2c2c;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
+}
+
+.card-item img {
+    max-width: 100%;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.card-item h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    flex-grow: 1;
+    color: #ffffff;
+}
+
+.card-item .card-artist {
+    font-size: 0.9rem;
+    color: #999;
+    margin-bottom: 10px;
+}
+
+.no-image {
+    height: 310px;
+    background-color: #333;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
