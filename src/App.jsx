@@ -8,11 +8,24 @@ import Settings from './pages/Settings';
 import DeckDetail from './pages/DeckDetail';
 import Collection from './pages/Collection';
 import Navbar from './components/Navbar';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import './assets/style/global.css';
 
 function App() {
   const [decks, setDecks] = useState([]);
   const [collection, setCollection] = useState([]);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
 
   const handleSaveDeck = (newDeckData) => {
     const newDeck = {
@@ -35,7 +48,7 @@ function App() {
       }
       return deck;
     }));
-    alert(`La carte "${card.name}" a été ajoutée au deck !`);
+    //alert(`La carte "${card.name}" a été ajoutée au deck !`);
   };
 
   const addCardToCollection = (card) => {
@@ -44,7 +57,7 @@ function App() {
       return;
     }
     setCollection([...collection, card]);
-    alert(`La carte "${card.name}" a été ajoutée à votre collection !`);
+    //alert(`La carte "${card.name}" a été ajoutée à votre collection !`);
   };
 
   const removeCardFromCollection = (cardId) => {
@@ -53,13 +66,13 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Navbar />
+      <Navbar user={user} setUser={setUser} />
       <div className="container">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route
             path="/search"
-            element={<Search decks={decks} addCardToDeck={addCardToDeck} addCardToCollection={addCardToCollection} />}
+            element={<Search decks={decks} addCardToDeck={addCardToDeck} addCardToCollection={addCardToCollection} onSaveDeck={handleSaveDeck} />}
           />
           <Route
             path="/decks"
@@ -72,6 +85,8 @@ function App() {
           <Route path="/profile" element={<Profile decks={decks} />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/deck/:deckId" element={<DeckDetail decks={decks} />} />
+          <Route path="/login" element={<Login setUser={setUser} />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </div>
     </BrowserRouter>

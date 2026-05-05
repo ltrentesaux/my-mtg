@@ -1,0 +1,128 @@
+.profile-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.profile-header-card {
+  background-color: #333;
+  padding: 2rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Ajout pour le conteneur d'avatar interactif */
+.avatar-container {
+  position: relative;
+  cursor: pointer;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.profile-avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid #007bff;
+  display: block; /* S'assure qu'il n'y a pas d'espace sous l'image */
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.avatar-container:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-edit-text {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.profile-header-info h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  color: #ffffff;
+}
+
+.profile-header-info p {
+  margin: 0.5rem 0 1rem;
+  color: #ccc;
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background-color: #333;
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 2.5rem;
+  color: #007bff;
+}
+
+.stat-card p {
+  margin: 0;
+  color: #ccc;
+  font-size: 1rem;
+}
+
+.recent-activity-section {
+  background-color: #333;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.recent-activity-section h2 {
+  margin-top: 0;
+  color: #ffffff;
+  border-bottom: 2px solid #555;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.activity-item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #444;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-item p {
+  margin: 0;
+  color: #ffffff;
+}
+
+.activity-item a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.activity-item a:hover {
+  text-decoration: underline;
+}

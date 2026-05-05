@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import '../assets/style/Search.css';
 import AddToDeckModal from '../components/AddToDeckModal';
+import NewDeckModal from '../components/NewDeckModal';
 
-function Search({ decks, addCardToDeck, addCardToCollection }) {
+function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || ' ');
   const [sets, setSets] = useState([]);
@@ -202,6 +203,7 @@ function Search({ decks, addCardToDeck, addCardToCollection }) {
           decks={decks}
           onSelectDeck={handleSelectDeck}
           onCancel={handleCloseModal}
+          onSaveDeck={onSaveDeck}
         />
       )}
     </div>

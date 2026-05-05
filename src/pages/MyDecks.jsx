@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import '../assets/style/MyDecks.css';
 import NewDeckModal from '../components/NewDeckModal';
 
-function MyDecks({ decks, onSaveDeck }) { // Recevoir les props ici
+function MyDecks({ decks, onSaveDeck }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => {
@@ -45,7 +45,7 @@ function MyDecks({ decks, onSaveDeck }) { // Recevoir les props ici
       </div>
 
       {isModalOpen && (
-        <NewDeckModal 
+        <NewDeckModal
           onSave={handleSave}
           onCancel={handleCloseModal}
         />

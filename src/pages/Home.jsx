@@ -28,10 +28,10 @@ function Home() {
           />
           <button type="submit" className="search-button">Rechercher</button>
         </form>
-        <div className="quick-links">
+        {/*div className="quick-links">
           <Link to="/decks" className="quick-link-btn">Mes Decks</Link>
           <Link to="/profile" className="quick-link-btn">Mon Profil</Link>
-        </div>
+        </div*/}
       </header>
     </div>
   );
