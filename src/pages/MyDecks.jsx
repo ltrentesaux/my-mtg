@@ -35,16 +35,21 @@ function MyDecks({ decks, onSaveDeck }) {
           decks.map(deck => (
             <Link to={`/deck/${deck.id}`} key={deck.id} className="deck-card-link">
               <div className="deck-card">
-                <img 
-                  src={deck.coverCard} 
-                  alt={deck.name} 
-                  className="deck-cover-image" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    openModal(deck.coverCard);
-                  }}
-                  style={{ cursor: 'zoom-in' }}
-                />
+                <div className="deck-card-preview">
+                  {deck.cards && deck.cards.length > 0 ? (
+                    deck.cards.slice(0, 4).map((card, index) => (
+                      <img 
+                        key={`${card.id}-${index}`} 
+                        src={card.image_uris?.normal || card.imageUrl} 
+                        alt={card.name} 
+                        className="deck-preview-img"
+                        style={{ zIndex: 4 - index }}
+                      />
+                    ))
+                  ) : (
+                    <div className="empty-deck-preview">Deck vide</div>
+                  )}
+                </div>
                 <div className="deck-card-info">
                   <h3>{deck.name}</h3>
                   <p>{deck.format}</p>

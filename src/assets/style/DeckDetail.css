@@ -157,3 +157,33 @@
   text-overflow: ellipsis;
   padding: 0 4px;
 }
+
+.rename-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.rename-input {
+  background-color: #2C2C2C;
+  color: #FFF;
+  border: 1px solid #555;
+  padding: 8px 12px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: #444;
+}

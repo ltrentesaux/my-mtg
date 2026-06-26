@@ -117,6 +117,69 @@ function App() {
     }
   };
 
+  const handleDeleteDeck = async (deckId) => {
+    if (!user) return;
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce deck ?")) {
+      try {
+        const res = await axios.delete(`${API_BASE}/decks/${deckId}`);
+        if (res.data.success) {
+          setDecks(prevDecks => prevDecks.filter(d => d.id !== deckId));
+          return true;
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Erreur lors de la suppression.");
+      }
+    }
+    return false;
+  };
+
+  const handleRenameDeck = async (deckId, newName) => {
+    if (!user || !newName.trim()) return;
+    try {
+      const res = await axios.put(`${API_BASE}/decks/${deckId}`, { name: newName });
+      if (res.data.success) {
+        setDecks(prevDecks => prevDecks.map(d => 
+          d.id === deckId ? { ...d, name: newName } : d
+        ));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erreur lors du renommage.");
+    }
+  };
+
+  const handleDuplicateDeck = async (deckId) => {
+    if (!user) return;
+    try {
+      const res = await axios.post(`${API_BASE}/decks/${deckId}/duplicate`);
+      if (res.data.success) {
+        const newDeckId = res.data.deck_id;
+        
+        // Re-fetch decks to get the updated list including the duplicate with cards hydrated
+        axios.get(`${API_BASE}/decks/${user.id}`).then(async fetchRes => {
+          if (fetchRes.data.success) {
+            const fetchedDecks = fetchRes.data.decks;
+            const hydratedDecks = await Promise.all(fetchedDecks.map(async deck => {
+              return {
+                ...deck,
+                cards: await fetchScryfallData(deck.cards)
+              };
+            }));
+            setDecks(hydratedDecks);
+          }
+        });
+        
+        alert("Deck dupliqué avec succès !");
+        return newDeckId;
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erreur lors de la duplication.");
+    }
+    return null;
+  };
+
   const addCardToDeck = async (deckId, card, quantity = 1) => {
     if (!user) {
       alert("Vous devez être connecté pour modifier un deck !");
@@ -256,7 +319,13 @@ function App() {
           />
           <Route path="/profile" element={<Profile decks={decks} />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/deck/:deckId" element={<DeckDetail decks={decks} updateDeckCardQuantity={updateDeckCardQuantity} />} />
+          <Route path="/deck/:deckId" element={<DeckDetail 
+            decks={decks} 
+            updateDeckCardQuantity={updateDeckCardQuantity} 
+            onDeleteDeck={handleDeleteDeck}
+            onRenameDeck={handleRenameDeck}
+            onDuplicateDeck={handleDuplicateDeck}
+          />} />
           <Route path="/login" element={<Login setUser={setUser} />} />
           <Route path="/register" element={<Register />} />
         </Routes>
