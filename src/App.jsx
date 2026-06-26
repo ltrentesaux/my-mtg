@@ -340,13 +340,14 @@ function App() {
           />
           <Route
             path="/collection"
-            element={<Collection collection={collection} removeCardFromCollection={removeCardFromCollection} updateCollectionCardQuantity={updateCollectionCardQuantity} />}
+            element={<Collection collection={collection} removeCardFromCollection={removeCardFromCollection} updateCollectionCardQuantity={updateCollectionCardQuantity} addCardToCollection={addCardToCollection} />}
           />
           <Route path="/profile" element={<Profile decks={decks} />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/deck/:deckId" element={<DeckDetail 
             decks={decks} 
             updateDeckCardQuantity={updateDeckCardQuantity} 
+            addCardToDeck={addCardToDeck}
             onDeleteDeck={handleDeleteDeck}
             onRenameDeck={handleRenameDeck}
             onDuplicateDeck={handleDuplicateDeck}
