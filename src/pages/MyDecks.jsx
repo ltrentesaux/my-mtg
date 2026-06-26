@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/style/MyDecks.css';
 import NewDeckModal from '../components/NewDeckModal';
+import { useImageModal } from '../contexts/ImageModalContext';
 
 function MyDecks({ decks, onSaveDeck }) {
+  const { openModal } = useImageModal();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => {
@@ -33,7 +35,16 @@ function MyDecks({ decks, onSaveDeck }) {
           decks.map(deck => (
             <Link to={`/deck/${deck.id}`} key={deck.id} className="deck-card-link">
               <div className="deck-card">
-                <img src={deck.coverCard} alt={deck.name} className="deck-cover-image" />
+                <img 
+                  src={deck.coverCard} 
+                  alt={deck.name} 
+                  className="deck-cover-image" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openModal(deck.coverCard);
+                  }}
+                  style={{ cursor: 'zoom-in' }}
+                />
                 <div className="deck-card-info">
                   <h3>{deck.name}</h3>
                   <p>{deck.format}</p>

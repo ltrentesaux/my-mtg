@@ -1,7 +1,9 @@
 import React from 'react';
 import '../assets/style/Collection.css';
+import { useImageModal } from '../contexts/ImageModalContext';
 
 function Collection({ collection, removeCardFromCollection }) {
+    const { openModal } = useImageModal();
     return (
         <div className="collection-page-container">
             <h1>Ma Collection</h1>
@@ -21,7 +23,12 @@ function Collection({ collection, removeCardFromCollection }) {
                 {collection.map(card => (
                     <div key={card.id} className="card-item">
                         {card.imageUrl ? (
-                            <img src={card.imageUrl} alt={card.name} />
+                            <img 
+                                src={card.imageUrl} 
+                                alt={card.name} 
+                                onClick={() => openModal(card.imageUrl)}
+                                style={{ cursor: 'zoom-in' }}
+                            />
                         ) : (
                             <div className="no-image">Image non disponible</div>
                         )}

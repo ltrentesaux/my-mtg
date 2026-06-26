@@ -4,6 +4,7 @@ import axios from 'axios';
 import '../assets/style/Search.css';
 import AddToDeckModal from '../components/AddToDeckModal';
 import NewDeckModal from '../components/NewDeckModal';
+import { useImageModal } from '../contexts/ImageModalContext';
 
 function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck, updateDeckCardQuantity }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,6 +16,7 @@ function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck, updateD
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
+  const { openModal } = useImageModal();
 
   const [setSearchTerm, setSetSearchTerm] = useState('');
   const [isSetDropdownOpen, setIsSetDropdownOpen] = useState(false);
@@ -182,7 +184,12 @@ function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck, updateD
         {cards.map(card => (
           <div key={card.id} className="card-item">
             {card.imageUrl ? (
-              <img src={card.imageUrl} alt={card.name} />
+              <img 
+                src={card.imageUrl} 
+                alt={card.name} 
+                onClick={() => openModal(card.imageUrl)}
+                style={{ cursor: 'zoom-in' }}
+              />
             ) : (
               <div className="no-image">Image non disponible</div>
             )}
