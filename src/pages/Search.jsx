@@ -3,10 +3,11 @@ import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import '../assets/style/Search.css';
 import AddToDeckModal from '../components/AddToDeckModal';
+import AddToCollectionModal from '../components/AddToCollectionModal';
 import NewDeckModal from '../components/NewDeckModal';
 import { useImageModal } from '../contexts/ImageModalContext';
 
-function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck, updateDeckCardQuantity }) {
+function Search({ decks, collection, updateCollectionCardQuantity, addCardToDeck, addCardToCollection, onSaveDeck, updateDeckCardQuantity }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || ' ');
   const [sets, setSets] = useState([]);
@@ -15,6 +16,7 @@ function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck, updateD
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const { openModal } = useImageModal();
 
@@ -75,6 +77,9 @@ function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck, updateD
         name: card.printed_name || card.name,
         artist: card.artist,
         imageUrl: card.image_uris?.large || card.card_faces?.[0].image_uris?.large,
+        foil: card.foil,
+        nonfoil: card.nonfoil,
+        etched: card.etched,
       })).filter(card => card.imageUrl);
 
       setCards(formattedCards);
@@ -110,8 +115,14 @@ function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck, updateD
     setIsModalOpen(true);
   };
 
+  const handleOpenCollectionModal = (card) => {
+    setSelectedCard(card);
+    setIsCollectionModalOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setIsCollectionModalOpen(false);
     setSelectedCard(null);
   };
 
@@ -181,24 +192,24 @@ function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck, updateD
       {error && <p className="error-message">{error}</p>}
 
       <div className="card-results-grid">
-        {cards.map(card => (
-          <div key={card.id} className="card-item">
-            {card.imageUrl ? (
-              <img 
-                src={card.imageUrl} 
-                alt={card.name} 
-                onClick={() => openModal(card.imageUrl)}
-                style={{ cursor: 'zoom-in' }}
-              />
-            ) : (
-              <div className="no-image">Image non disponible</div>
-            )}
-            <h3>{card.name}</h3>
-            <p>{card.artist}</p>
-            <button onClick={() => handleOpenModal(card)} className="btn btn-secondary">Ajouter au deck</button>
-            <button onClick={() => addCardToCollection(card)} className="btn btn-success" style={{ marginTop: '8px' }}>Ajouter à la collection</button>
-          </div>
-        ))}
+        {cards.map(card => {
+          const variants = [];
+          if (card.nonfoil) variants.push({ value: 'nonfoil', label: 'Normal' });
+          if (card.foil) variants.push({ value: 'foil', label: 'Foil' });
+          if (card.etched) variants.push({ value: 'etched', label: 'Etched' });
+          if (variants.length === 0) variants.push({ value: 'nonfoil', label: 'Normal' }); // Fallback
+
+          return (
+            <CardResultItem 
+              key={card.id} 
+              card={card} 
+              variants={variants}
+              openModal={openModal}
+              onAddDeck={() => handleOpenModal(card)}
+              onAddCollection={() => handleOpenCollectionModal(card)}
+            />
+          );
+        })}
       </div>
 
       {isModalOpen && (
@@ -211,8 +222,40 @@ function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck, updateD
           onSaveDeck={onSaveDeck}
         />
       )}
+
+      {isCollectionModalOpen && (
+        <AddToCollectionModal
+          collection={collection} // We need to pass collection from App.jsx! Wait. I will do that next.
+          selectedCard={selectedCard}
+          addCardToCollection={addCardToCollection}
+          updateCollectionCardQuantity={updateCollectionCardQuantity}
+          onCancel={handleCloseModal}
+        />
+      )}
     </div>
   );
 }
 
 export default Search;
+
+function CardResultItem({ card, openModal, onAddDeck, onAddCollection }) {
+  return (
+    <div className="card-item">
+      {card.imageUrl ? (
+        <img 
+          src={card.imageUrl} 
+          alt={card.name} 
+          onClick={() => openModal(card.imageUrl)}
+          style={{ cursor: 'zoom-in' }}
+        />
+      ) : (
+        <div className="no-image">Image non disponible</div>
+      )}
+      <h3>{card.name}</h3>
+      <p>{card.artist}</p>
+      
+      <button onClick={onAddDeck} className="btn btn-secondary" style={{ marginTop: '10px' }}>Ajouter au deck</button>
+      <button onClick={onAddCollection} className="btn btn-success" style={{ marginTop: '8px' }}>Ajouter à la collection</button>
+    </div>
+  );
+}

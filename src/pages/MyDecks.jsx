@@ -37,15 +37,17 @@ function MyDecks({ decks, onSaveDeck }) {
               <div className="deck-card">
                 <div className="deck-card-preview">
                   {deck.cards && deck.cards.length > 0 ? (
-                    deck.cards.slice(0, 4).map((card, index) => (
+                    deck.cards.slice(0, 4).map((card, index) => {
+                      const imgUrl = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || card.imageUrl;
+                      return (
                       <img 
                         key={`${card.id}-${index}`} 
-                        src={card.image_uris?.normal || card.imageUrl} 
+                        src={imgUrl} 
                         alt={card.name} 
                         className="deck-preview-img"
                         style={{ zIndex: 4 - index }}
                       />
-                    ))
+                    )})
                   ) : (
                     <div className="empty-deck-preview">Deck vide</div>
                   )}

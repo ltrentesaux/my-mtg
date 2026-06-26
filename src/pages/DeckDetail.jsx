@@ -99,13 +99,14 @@ function DeckDetail({ decks, updateDeckCardQuantity, onDeleteDeck, onRenameDeck,
               const qTotal = card.quantity_total || 1;
               const qOwned = card.quantity_owned || 0;
               const variant = card.variant || 'nonfoil';
+              const imgUrl = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || card.imageUrl;
 
               return (
                 <div key={`${card.id}-${variant}`} className="deck-card-item">
                   <img 
-                    src={card.image_uris?.normal || card.imageUrl} 
+                    src={imgUrl} 
                     alt={card.name} 
-                    onClick={() => openModal(card.image_uris?.normal || card.imageUrl)}
+                    onClick={() => openModal(imgUrl)}
                     style={{ cursor: 'zoom-in' }}
                   />
                   <p className="deck-card-name">{card.printed_name || card.name}</p>

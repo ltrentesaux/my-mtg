@@ -180,7 +180,7 @@ function App() {
     return null;
   };
 
-  const addCardToDeck = async (deckId, card, quantity = 1) => {
+  const addCardToDeck = async (deckId, card, quantity = 1, variant = 'nonfoil') => {
     if (!user) {
       alert("Vous devez être connecté pour modifier un deck !");
       return;
@@ -190,20 +190,20 @@ function App() {
         card_id: card.id,
         quantity: quantity,
         lang: 'fr',
-        variant: 'nonfoil'
+        variant: variant
       });
       if (res.data.success) {
         setDecks(prevDecks => prevDecks.map(deck => {
           if (deck.id === parseInt(deckId)) {
             let updatedCards = [...deck.cards];
-            const existingCardIndex = updatedCards.findIndex(c => c.id === card.id);
+            const existingCardIndex = updatedCards.findIndex(c => c.id === card.id && (c.variant || 'nonfoil') === variant);
             if (existingCardIndex !== -1) {
               updatedCards[existingCardIndex] = {
                 ...updatedCards[existingCardIndex],
                 quantity_total: (updatedCards[existingCardIndex].quantity_total || 1) + quantity
               };
             } else {
-              updatedCards.push({ ...card, quantity_total: quantity, quantity_owned: 0 });
+              updatedCards.push({ ...card, quantity_total: quantity, quantity_owned: 0, variant: variant });
             }
             return { ...deck, cards: updatedCards };
           }
@@ -260,17 +260,42 @@ function App() {
     }
   };
 
-  const addCardToCollection = async (card) => {
+  const updateCollectionCardQuantity = async (cardId, variant, change) => {
+    if (!user) return;
+    try {
+      const res = await axios.put(`${API_BASE}/collections/${user.id}/cards/${cardId}`, {
+        change,
+        variant
+      });
+      if (res.data.success) {
+        setCollection(prevCollection => {
+          return prevCollection.map(card => {
+            if (card.id === cardId && (card.variant || 'nonfoil') === variant) {
+              const newQuantity = (card.quantity || 1) + change;
+              if (newQuantity <= 0) return null;
+              return { ...card, quantity: newQuantity };
+            }
+            return card;
+          }).filter(Boolean);
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erreur lors de la mise à jour de la collection.");
+    }
+  };
+
+  const addCardToCollection = async (card, variant = 'nonfoil') => {
     if (!user) return;
     try {
       const res = await axios.post(`${API_BASE}/collections`, {
         user_id: user.id,
         card_id: card.id,
         lang: 'fr',
-        variant: 'nonfoil'
+        variant: variant
       });
       if (res.data.success) {
-        const existingIndex = collection.findIndex(c => c.id === card.id);
+        const existingIndex = collection.findIndex(c => c.id === card.id && (c.variant || 'nonfoil') === variant);
         if (existingIndex !== -1) {
           const newCollection = [...collection];
           newCollection[existingIndex] = {
@@ -279,7 +304,7 @@ function App() {
           };
           setCollection(newCollection);
         } else {
-          setCollection([...collection, { ...card, quantity: 1 }]);
+          setCollection([...collection, { ...card, quantity: 1, variant: variant }]);
         }
       }
     } catch (e) {
@@ -287,12 +312,12 @@ function App() {
     }
   };
 
-  const removeCardFromCollection = async (cardId) => {
+  const removeCardFromCollection = async (cardId, variant = 'nonfoil') => {
     if (!user) return;
     try {
-      const res = await axios.delete(`${API_BASE}/collections/${user.id}/${cardId}`);
+      const res = await axios.delete(`${API_BASE}/collections/${user.id}/${cardId}?variant=${variant}`);
       if (res.data.success) {
-        setCollection(prevCollection => prevCollection.filter(card => card.id !== cardId));
+        setCollection(prevCollection => prevCollection.filter(card => !(card.id === cardId && (card.variant || 'nonfoil') === variant)));
       }
     } catch (e) {
       console.error(e);
@@ -307,7 +332,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route
             path="/search"
-            element={<Search decks={decks} addCardToDeck={addCardToDeck} addCardToCollection={addCardToCollection} onSaveDeck={handleSaveDeck} updateDeckCardQuantity={updateDeckCardQuantity} />}
+            element={<Search decks={decks} collection={collection} updateCollectionCardQuantity={updateCollectionCardQuantity} addCardToDeck={addCardToDeck} addCardToCollection={addCardToCollection} onSaveDeck={handleSaveDeck} updateDeckCardQuantity={updateDeckCardQuantity} />}
           />
           <Route
             path="/decks"
@@ -315,7 +340,7 @@ function App() {
           />
           <Route
             path="/collection"
-            element={<Collection collection={collection} removeCardFromCollection={removeCardFromCollection} />}
+            element={<Collection collection={collection} removeCardFromCollection={removeCardFromCollection} updateCollectionCardQuantity={updateCollectionCardQuantity} />}
           />
           <Route path="/profile" element={<Profile decks={decks} />} />
           <Route path="/settings" element={<Settings />} />
