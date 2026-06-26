@@ -5,7 +5,7 @@ import '../assets/style/Search.css';
 import AddToDeckModal from '../components/AddToDeckModal';
 import NewDeckModal from '../components/NewDeckModal';
 
-function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck }) {
+function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck, updateDeckCardQuantity }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || ' ');
   const [sets, setSets] = useState([]);
@@ -44,40 +44,36 @@ function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck }) {
   }, []);
 
   const searchCards = async (searchQuery, setCode) => {
-
     setLoading(true);
     setError(null);
     try {
-      let q = `name:/${searchQuery}/ lang:fr`;
+      let q = `${searchQuery} lang:fr`;
       if (setCode) {
         q += ` set:${setCode}`;
       }
 
-      if (await axios.get('https://api.scryfall.com/cards/search', {
-        params: { q, unique: 'prints', order: 'name' },
-      }).then(response => {
-        //console.log(response);
-      }).catch(error => {
-        console.log(error);
-      })) {
-      } else {
-        q = `name:/${searchQuery}/ `;
+      let response;
+      try {
+        response = await axios.get('https://api.scryfall.com/cards/search', {
+          params: { q, unique: 'prints', order: 'name' },
+        });
+      } catch (frError) {
+        // Fallback to any language (English default) if French fails
+        q = `${searchQuery}`;
         if (setCode) {
           q += ` set:${setCode}`;
         }
+        response = await axios.get('https://api.scryfall.com/cards/search', {
+          params: { q, unique: 'prints', order: 'name' },
+        });
       }
 
-      let response = await axios.get('https://api.scryfall.com/cards/search', {
-        params: { q, unique: 'prints', order: 'name' },
-      });
-      //console.log(response);
       const formattedCards = response.data.data.map(card => ({
         id: card.id,
-        name: card.name,
+        name: card.printed_name || card.name,
         artist: card.artist,
         imageUrl: card.image_uris?.large || card.card_faces?.[0].image_uris?.large,
       })).filter(card => card.imageUrl);
-
 
       setCards(formattedCards);
       if (formattedCards.length === 0) {
@@ -117,9 +113,9 @@ function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck }) {
     setSelectedCard(null);
   };
 
-  const handleSelectDeck = (deckId) => {
+  const handleSelectDeck = (deckId, quantity) => {
     if (selectedCard) {
-      addCardToDeck(deckId, selectedCard);
+      addCardToDeck(deckId, selectedCard, quantity);
       handleCloseModal();
     }
   };
@@ -201,7 +197,9 @@ function Search({ decks, addCardToDeck, addCardToCollection, onSaveDeck }) {
       {isModalOpen && (
         <AddToDeckModal
           decks={decks}
-          onSelectDeck={handleSelectDeck}
+          selectedCard={selectedCard}
+          addCardToDeck={addCardToDeck}
+          updateDeckCardQuantity={updateDeckCardQuantity}
           onCancel={handleCloseModal}
           onSaveDeck={onSaveDeck}
         />

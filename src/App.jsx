@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import axios from 'axios';
 import Home from './pages/Home';
 import Search from './pages/Search';
 import Profile from './pages/Profile';
@@ -11,6 +12,39 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import './assets/style/global.css';
+
+const API_BASE = 'http://localhost:8000/api';
+
+// Helper function to hydrate Scryfall data
+const fetchScryfallData = async (items) => {
+  if (items.length === 0) return [];
+
+  const chunks = [];
+  for (let i = 0; i < items.length; i += 75) {
+    chunks.push(items.slice(i, i + 75));
+  }
+
+  let allCards = [];
+  for (const chunk of chunks) {
+    const identifiers = chunk.map(item => ({ id: item.card_id }));
+    try {
+      const res = await axios.post('https://api.scryfall.com/cards/collection', { identifiers });
+      allCards = [...allCards, ...res.data.data];
+    } catch (e) {
+      console.error('Error hydrating scryfall data:', e);
+    }
+  }
+
+  return items.map(item => {
+    const sfCard = allCards.find(sf => sf.id === item.card_id) || {};
+    return {
+      ...sfCard,
+      ...item,
+      id: item.card_id, // keep scryfall id as primary
+      db_id: item.id    // keep local db id
+    };
+  });
+};
 
 function App() {
   const [decks, setDecks] = useState([]);
@@ -27,41 +61,179 @@ function App() {
     return null;
   });
 
-  const handleSaveDeck = (newDeckData) => {
-    const newDeck = {
-      id: decks.length > 0 ? Math.max(...decks.map(d => d.id)) + 1 : 1,
-      ...newDeckData,
-      coverCard: 'https://cards.scryfall.io/large/front/5/8/58B6357C-28B4-462C-9455-22ABC545453A.jpg?1562608923',
-      cards: [],
-    };
-    setDecks([...decks, newDeck]);
-  };
-
-  const addCardToDeck = (deckId, card) => {
-    setDecks(prevDecks => prevDecks.map(deck => {
-      if (deck.id === deckId) {
-        if (deck.cards.find(c => c.id === card.id)) {
-          alert('Cette carte est déjà dans le deck.');
-          return deck;
+  useEffect(() => {
+    if (user) {
+      axios.get(`${API_BASE}/collections/${user.id}`).then(async res => {
+        if (res.data.success) {
+          const hydrated = await fetchScryfallData(res.data.collection);
+          setCollection(hydrated);
         }
-        return { ...deck, cards: [...deck.cards, card] };
-      }
-      return deck;
-    }));
-    //alert(`La carte "${card.name}" a été ajoutée au deck !`);
-  };
+      }).catch(console.error);
 
-  const addCardToCollection = (card) => {
-    if (collection.find(c => c.id === card.id)) {
-      alert('Cette carte est déjà dans votre collection.');
+      axios.get(`${API_BASE}/decks/${user.id}`).then(async res => {
+        if (res.data.success) {
+          const fetchedDecks = res.data.decks;
+          const hydratedDecks = await Promise.all(fetchedDecks.map(async deck => {
+            return {
+              ...deck,
+              cards: await fetchScryfallData(deck.cards)
+            };
+          }));
+          setDecks(hydratedDecks);
+        }
+      }).catch(console.error);
+    } else {
+      setCollection([]);
+      setDecks([]);
+    }
+  }, [user]);
+
+  const handleSaveDeck = async (newDeckData) => {
+    if (!user) {
+      alert("Vous devez être connecté pour créer un deck !");
       return;
     }
-    setCollection([...collection, card]);
-    //alert(`La carte "${card.name}" a été ajoutée à votre collection !`);
+    try {
+      const res = await axios.post(`${API_BASE}/decks`, {
+        user_id: user.id,
+        name: newDeckData.name,
+        description: newDeckData.description,
+        format: newDeckData.format,
+      });
+      if (res.data.success) {
+        const newDeck = {
+          id: res.data.deck_id,
+          ...newDeckData,
+          cards: [],
+        };
+        setDecks([...decks, newDeck]);
+        alert("Deck créé avec succès !");
+      } else {
+        alert("Erreur du serveur lors de la création du deck.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erreur de connexion à l'API : " + e.message);
+    }
   };
 
-  const removeCardFromCollection = (cardId) => {
-    setCollection(prevCollection => prevCollection.filter(card => card.id !== cardId));
+  const addCardToDeck = async (deckId, card, quantity = 1) => {
+    if (!user) {
+      alert("Vous devez être connecté pour modifier un deck !");
+      return;
+    }
+    try {
+      const res = await axios.post(`${API_BASE}/decks/${deckId}/cards`, {
+        card_id: card.id,
+        quantity: quantity,
+        lang: 'fr',
+        variant: 'nonfoil'
+      });
+      if (res.data.success) {
+        setDecks(prevDecks => prevDecks.map(deck => {
+          if (deck.id === parseInt(deckId)) {
+            let updatedCards = [...deck.cards];
+            const existingCardIndex = updatedCards.findIndex(c => c.id === card.id);
+            if (existingCardIndex !== -1) {
+              updatedCards[existingCardIndex] = {
+                ...updatedCards[existingCardIndex],
+                quantity_total: (updatedCards[existingCardIndex].quantity_total || 1) + quantity
+              };
+            } else {
+              updatedCards.push({ ...card, quantity_total: quantity, quantity_owned: 0 });
+            }
+            return { ...deck, cards: updatedCards };
+          }
+          return deck;
+        }));
+        //alert(`Carte ajoutée au deck avec succès (${quantity} exemplaire(s)) !`);
+      } else {
+        alert("Erreur du serveur lors de l'ajout.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erreur de connexion à l'API : " + e.message);
+    }
+  };
+
+  const updateDeckCardQuantity = async (deckId, cardId, variant, type, change) => {
+    if (!user) {
+      alert("Vous devez être connecté !");
+      return;
+    }
+    try {
+      const res = await axios.put(`${API_BASE}/decks/${deckId}/cards/${cardId}`, {
+        type,
+        change,
+        variant
+      });
+      if (res.data.success) {
+        setDecks(prevDecks => prevDecks.map(deck => {
+          if (deck.id === parseInt(deckId)) {
+            const updatedCards = deck.cards.map(card => {
+              if (card.id === cardId && (card.variant || 'nonfoil') === variant) {
+                if (type === 'total') {
+                  const newTotal = (card.quantity_total || 1) + change;
+                  if (newTotal <= 0) return null;
+                  return { ...card, quantity_total: newTotal };
+                } else {
+                  let newOwned = (card.quantity_owned || 0) + change;
+                  newOwned = Math.max(0, Math.min(newOwned, card.quantity_total || 1));
+                  return { ...card, quantity_owned: newOwned };
+                }
+              }
+              return card;
+            }).filter(Boolean);
+            return { ...deck, cards: updatedCards };
+          }
+          return deck;
+        }));
+      } else {
+        alert("Erreur du serveur lors de la mise à jour.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erreur API : " + e.message);
+    }
+  };
+
+  const addCardToCollection = async (card) => {
+    if (!user) return;
+    try {
+      const res = await axios.post(`${API_BASE}/collections`, {
+        user_id: user.id,
+        card_id: card.id,
+        lang: 'fr',
+        variant: 'nonfoil'
+      });
+      if (res.data.success) {
+        const existingIndex = collection.findIndex(c => c.id === card.id);
+        if (existingIndex !== -1) {
+          const newCollection = [...collection];
+          newCollection[existingIndex] = {
+            ...newCollection[existingIndex],
+            quantity: (newCollection[existingIndex].quantity || 1) + 1
+          };
+          setCollection(newCollection);
+        } else {
+          setCollection([...collection, { ...card, quantity: 1 }]);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const removeCardFromCollection = async (cardId) => {
+    if (!user) return;
+    try {
+      const res = await axios.delete(`${API_BASE}/collections/${user.id}/${cardId}`);
+      if (res.data.success) {
+        setCollection(prevCollection => prevCollection.filter(card => card.id !== cardId));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -72,7 +244,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route
             path="/search"
-            element={<Search decks={decks} addCardToDeck={addCardToDeck} addCardToCollection={addCardToCollection} onSaveDeck={handleSaveDeck} />}
+            element={<Search decks={decks} addCardToDeck={addCardToDeck} addCardToCollection={addCardToCollection} onSaveDeck={handleSaveDeck} updateDeckCardQuantity={updateDeckCardQuantity} />}
           />
           <Route
             path="/decks"
@@ -84,7 +256,7 @@ function App() {
           />
           <Route path="/profile" element={<Profile decks={decks} />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/deck/:deckId" element={<DeckDetail decks={decks} />} />
+          <Route path="/deck/:deckId" element={<DeckDetail decks={decks} updateDeckCardQuantity={updateDeckCardQuantity} />} />
           <Route path="/login" element={<Login setUser={setUser} />} />
           <Route path="/register" element={<Register />} />
         </Routes>
