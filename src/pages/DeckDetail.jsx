@@ -32,12 +32,22 @@ function DeckDetail({ decks, updateDeckCardQuantity, addCardToDeck, onDeleteDeck
       }
   });
 
-  const handleQuantityChange = (card, variant, change) => {
-    const currentTotal = card.quantities_total[variant] || 0;
+  const handleQuantityChange = (card, change) => {
+    let variantToChange = 'nonfoil';
+    
+    if (change < 0) {
+      const qNonFoil = quantityEditMode === 'total' ? (card.quantities_total['nonfoil'] || 0) : (card.quantities_owned['nonfoil'] || 0);
+      if (qNonFoil === 0) {
+        const quantitiesObj = quantityEditMode === 'total' ? card.quantities_total : card.quantities_owned;
+        variantToChange = Object.keys(quantitiesObj).find(v => quantitiesObj[v] > 0) || 'nonfoil';
+      }
+    }
+
+    const currentTotal = card.quantities_total[variantToChange] || 0;
     if (currentTotal === 0 && change > 0) {
-      addCardToDeck(deck.id, card, change, variant);
-    } else if (currentTotal > 0) {
-      updateDeckCardQuantity(deck.id, card.id, variant, quantityEditMode, change);
+      addCardToDeck(deck.id, card, change, variantToChange);
+    } else {
+      updateDeckCardQuantity(deck.id, card.id, variantToChange, quantityEditMode, change);
     }
   };
 
@@ -119,11 +129,8 @@ function DeckDetail({ decks, updateDeckCardQuantity, addCardToDeck, onDeleteDeck
             {groupedDeckCards.map(card => {
               const imgUrl = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || card.imageUrl;
 
-              const variants = [];
-              if (card.nonfoil !== false) variants.push({ value: 'nonfoil', label: 'Normal' });
-              if (card.foil) variants.push({ value: 'foil', label: 'Foil' });
-              if (card.etched) variants.push({ value: 'etched', label: 'Etched' });
-              if (variants.length === 0) variants.push({ value: 'nonfoil', label: 'Normal' });
+              const qTotal = Object.values(card.quantities_total).reduce((sum, q) => sum + q, 0);
+              const qOwned = Object.values(card.quantities_owned).reduce((sum, q) => sum + q, 0);
 
               return (
                 <div key={card.id} className="deck-card-item">
@@ -135,33 +142,15 @@ function DeckDetail({ decks, updateDeckCardQuantity, addCardToDeck, onDeleteDeck
                   />
                   <p className="deck-card-name">{card.printed_name || card.name}</p>
 
-                  <div style={{ marginTop: '10px' }}>
-                    {variants.map(v => {
-                      const qTotal = card.quantities_total[v.value] || 0;
-                      const qOwned = card.quantities_owned[v.value] || 0;
-                      
-                      return (
-                        <div key={v.value} className="card-quantity-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px', backgroundColor: '#1A1A1A', padding: '5px 10px', borderRadius: '4px', border: '1px solid #333' }}>
-                          <span style={{ fontWeight: 'bold', color: '#E0E0E0', fontSize: '0.9rem' }}>{v.label}</span>
-                          <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                            <div className="quantity-display" style={{ marginRight: '10px', fontSize: '0.9rem' }}>{qOwned} / {qTotal}</div>
-                            <button 
-                              onClick={() => handleQuantityChange(card, v.value, -1)}
-                              disabled={quantityEditMode === 'total' ? qTotal <= 0 : qOwned <= 0}
-                              style={{ padding: '2px 8px', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '4px', cursor: (quantityEditMode === 'total' ? qTotal <= 0 : qOwned <= 0) ? 'not-allowed' : 'pointer' }}
-                            >
-                              -
-                            </button>
-                            <button 
-                              onClick={() => handleQuantityChange(card, v.value, 1)}
-                              style={{ padding: '2px 8px', backgroundColor: '#E94560', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="card-quantity-controls">
+                    <div className="quantity-display">{qOwned} / {qTotal}</div>
+                    <div className="quantity-actions">
+                      <button 
+                        onClick={() => handleQuantityChange(card, -1)}
+                        disabled={quantityEditMode === 'total' ? qTotal <= 0 : qOwned <= 0}
+                      >-</button>
+                      <button onClick={() => handleQuantityChange(card, 1)}>+</button>
+                    </div>
                   </div>
                 </div>
               );
