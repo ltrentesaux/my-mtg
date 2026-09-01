@@ -70,3 +70,36 @@
   text-align: center;
   padding: 2rem;
 }
+
+.deck-card-preview {
+  display: flex;
+  height: 120px;
+  background-color: #222;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid #444;
+}
+
+.deck-preview-img {
+  width: 75px;
+  height: 105px;
+  border-radius: 4px;
+  object-fit: cover;
+  box-shadow: -4px 0 8px rgba(0,0,0,0.6);
+  margin-left: -35px; /* Overlap */
+  position: relative;
+}
+
+.deck-preview-img:first-child {
+  margin-left: 0;
+  box-shadow: 0 0 8px rgba(0,0,0,0.4);
+}
+
+.empty-deck-preview {
+  color: #666;
+  font-style: italic;
+  font-size: 0.95rem;
+}

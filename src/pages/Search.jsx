@@ -3,8 +3,11 @@ import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import '../assets/style/Search.css';
 import AddToDeckModal from '../components/AddToDeckModal';
+import AddToCollectionModal from '../components/AddToCollectionModal';
+import NewDeckModal from '../components/NewDeckModal';
+import { useImageModal } from '../contexts/ImageModalContext';
 
-function Search({ decks, addCardToDeck, addCardToCollection }) {
+function Search({ decks, collection, updateCollectionCardQuantity, addCardToDeck, addCardToCollection, onSaveDeck, updateDeckCardQuantity }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || ' ');
   const [sets, setSets] = useState([]);
@@ -13,7 +16,9 @@ function Search({ decks, addCardToDeck, addCardToCollection }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
+  const { openModal } = useImageModal();
 
   const [setSearchTerm, setSetSearchTerm] = useState('');
   const [isSetDropdownOpen, setIsSetDropdownOpen] = useState(false);
@@ -43,40 +48,39 @@ function Search({ decks, addCardToDeck, addCardToCollection }) {
   }, []);
 
   const searchCards = async (searchQuery, setCode) => {
-
     setLoading(true);
     setError(null);
     try {
-      let q = `name:/${searchQuery}/ lang:fr`;
+      let q = `${searchQuery} lang:fr`;
       if (setCode) {
         q += ` set:${setCode}`;
       }
 
-      if (await axios.get('https://api.scryfall.com/cards/search', {
-        params: { q, unique: 'prints', order: 'name' },
-      }).then(response => {
-        //console.log(response);
-      }).catch(error => {
-        console.log(error);
-      })) {
-      } else {
-        q = `name:/${searchQuery}/ `;
+      let response;
+      try {
+        response = await axios.get('https://api.scryfall.com/cards/search', {
+          params: { q, unique: 'prints', order: 'name' },
+        });
+      } catch (frError) {
+        // Fallback to any language (English default) if French fails
+        q = `${searchQuery}`;
         if (setCode) {
           q += ` set:${setCode}`;
         }
+        response = await axios.get('https://api.scryfall.com/cards/search', {
+          params: { q, unique: 'prints', order: 'name' },
+        });
       }
 
-      let response = await axios.get('https://api.scryfall.com/cards/search', {
-        params: { q, unique: 'prints', order: 'name' },
-      });
-      //console.log(response);
       const formattedCards = response.data.data.map(card => ({
         id: card.id,
-        name: card.name,
+        name: card.printed_name || card.name,
         artist: card.artist,
         imageUrl: card.image_uris?.large || card.card_faces?.[0].image_uris?.large,
+        foil: card.foil,
+        nonfoil: card.nonfoil,
+        etched: card.etched,
       })).filter(card => card.imageUrl);
-
 
       setCards(formattedCards);
       if (formattedCards.length === 0) {
@@ -111,14 +115,20 @@ function Search({ decks, addCardToDeck, addCardToCollection }) {
     setIsModalOpen(true);
   };
 
+  const handleOpenCollectionModal = (card) => {
+    setSelectedCard(card);
+    setIsCollectionModalOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setIsCollectionModalOpen(false);
     setSelectedCard(null);
   };
 
-  const handleSelectDeck = (deckId) => {
+  const handleSelectDeck = (deckId, quantity) => {
     if (selectedCard) {
-      addCardToDeck(deckId, selectedCard);
+      addCardToDeck(deckId, selectedCard, quantity);
       handleCloseModal();
     }
   };
@@ -182,25 +192,43 @@ function Search({ decks, addCardToDeck, addCardToCollection }) {
       {error && <p className="error-message">{error}</p>}
 
       <div className="card-results-grid">
-        {cards.map(card => (
-          <div key={card.id} className="card-item">
-            {card.imageUrl ? (
-              <img src={card.imageUrl} alt={card.name} />
-            ) : (
-              <div className="no-image">Image non disponible</div>
-            )}
-            <h3>{card.name}</h3>
-            <p>{card.artist}</p>
-            <button onClick={() => handleOpenModal(card)} className="btn btn-secondary">Ajouter au deck</button>
-            <button onClick={() => addCardToCollection(card)} className="btn btn-success" style={{ marginTop: '8px' }}>Ajouter à la collection</button>
-          </div>
-        ))}
+        {cards.map(card => {
+          const variants = [];
+          if (card.nonfoil) variants.push({ value: 'nonfoil', label: 'Normal' });
+          if (card.foil) variants.push({ value: 'foil', label: 'Foil' });
+          if (card.etched) variants.push({ value: 'etched', label: 'Etched' });
+          if (variants.length === 0) variants.push({ value: 'nonfoil', label: 'Normal' }); // Fallback
+
+          return (
+            <CardResultItem 
+              key={card.id} 
+              card={card} 
+              variants={variants}
+              openModal={openModal}
+              onAddDeck={() => handleOpenModal(card)}
+              onAddCollection={() => handleOpenCollectionModal(card)}
+            />
+          );
+        })}
       </div>
 
       {isModalOpen && (
         <AddToDeckModal
           decks={decks}
-          onSelectDeck={handleSelectDeck}
+          selectedCard={selectedCard}
+          addCardToDeck={addCardToDeck}
+          updateDeckCardQuantity={updateDeckCardQuantity}
+          onCancel={handleCloseModal}
+          onSaveDeck={onSaveDeck}
+        />
+      )}
+
+      {isCollectionModalOpen && (
+        <AddToCollectionModal
+          collection={collection} // We need to pass collection from App.jsx! Wait. I will do that next.
+          selectedCard={selectedCard}
+          addCardToCollection={addCardToCollection}
+          updateCollectionCardQuantity={updateCollectionCardQuantity}
           onCancel={handleCloseModal}
         />
       )}
@@ -209,3 +237,25 @@ function Search({ decks, addCardToDeck, addCardToCollection }) {
 }
 
 export default Search;
+
+function CardResultItem({ card, openModal, onAddDeck, onAddCollection }) {
+  return (
+    <div className="card-item">
+      {card.imageUrl ? (
+        <img 
+          src={card.imageUrl} 
+          alt={card.name} 
+          onClick={() => openModal(card.imageUrl)}
+          style={{ cursor: 'zoom-in' }}
+        />
+      ) : (
+        <div className="no-image">Image non disponible</div>
+      )}
+      <h3>{card.name}</h3>
+      <p>{card.artist}</p>
+      
+      <button onClick={onAddDeck} className="btn btn-secondary" style={{ marginTop: '10px' }}>Ajouter au deck</button>
+      <button onClick={onAddCollection} className="btn btn-success" style={{ marginTop: '8px' }}>Ajouter à la collection</button>
+    </div>
+  );
+}
